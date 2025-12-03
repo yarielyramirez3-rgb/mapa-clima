@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa Interactivo: Clima en La Isla Española</title>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='https://unpkg.com/leaflet/dist/leaflet.css' />
+    <style>
+        #mapid { height: 600px; width: 100%; }
+        .locate-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .popup-img {
+            width: 220px;
+            height: auto;
+            display: block;
+            margin-top: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Mapa Interactivo: Clima en La Isla Española</h2>
+    <div id='mapid'></div>
+    <div class='locate-btn' onclick='locateUser()'>📍 Localizar mi posición</div>
+
+    <script src='https://unpkg.com/leaflet/dist/leaflet.js'></script>
+    <script>
+        var map = L.map('mapid').setView([18.7357, -70.1627], 7);
+
+        // Capas base
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+
+        var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+        });
+
+        osm.addTo(map);
+
+        // Capas temáticas
+        var hurricaneRisk = L.polygon([
+            [18.55, -69.90], [18.75, -69.90], [18.75, -69.70], [18.55, -69.70]
+        ], {color: 'purple', fillOpacity: 0.3}).bindPopup('<b>Zona de Huracanes:</b> Alta exposición a tormentas tropicales.');
+
+        var droughtRisk = L.polygon([
+            [18.40, -71.70], [18.60, -71.70], [18.60, -71.40], [18.40, -71.40]
+        ], {color: 'orange', fillOpacity: 0.3}).bindPopup('<b>Zona de Sequía:</b> Vulnerable a falta de lluvias y desertificación.');
+
+        var floodRisk = L.polygon([
+            [18.40, -68.95], [18.60, -68.95], [18.60, -68.75], [18.40, -68.75]
+        ], {color: 'blue', fillOpacity: 0.3}).bindPopup('<b>Zona de Inundación Costera:</b> Riesgo por aumento del nivel del mar.');
+
+        var erosionRisk = L.polygon([
+            [19.70, -71.60], [19.80, -71.60], [19.80, -71.40], [19.70, -71.40]
+        ], {color: 'brown', fillOpacity: 0.3}).bindPopup('<b>Zona de Erosión Costera:</b> Pérdida de playas y hábitats marinos.');
+
+        var mangroveRisk = L.polygon([
+            [19.00, -69.60], [19.10, -69.60], [19.10, -69.40], [19.00, -69.40]
+        ], {color: 'green', fillOpacity: 0.3}).bindPopup('<b>Zona de Manglares:</b> Ecosistemas costeros en peligro.');
+
+        var thematicLayers = {
+            "Huracanes": hurricaneRisk,
+            "Sequía": droughtRisk,
+            "Inundación Costera": floodRisk,
+            "Erosión Costera": erosionRisk,
+            "Manglares": mangroveRisk
+        };
+
+        // Marcadores con datos reales y fotos
+        var locations = [
+            {coords: [18.9712, -72.2852], popup: '<b>Haití:</b> Deforestación y sequías. Temperatura media: +1.2°C.<br><img src="https://upload.wikimedia.org/wikipedia/commons/4/4f/Deforestation_Haiti.jpg" class="popup-img">'},
+            {coords: [19.0000, -69.5000], popup: '<b>RD:</b> Manglares en riesgo. Nivel del mar ↑ 3.2 mm/año.<br><img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Mangrove_forest.jpg" class="popup-img">'},
+            {coords: [18.4800, -71.5000], popup: '<b>Zona fronteriza:</b> Desertificación. Precipitación ↓ 15%.<br><img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Desertification.jpg" class="popup-img">'},
+            {coords: [18.4500, -68.9667], popup: '<b>Punta Cana:</b> Inundación costera. Turismo afectado.<br><img src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Coastal_flooding.jpg" class="popup-img">'},
+            {coords: [19.2000, -70.5000], popup: '<b>Santiago:</b> Huracanes frecuentes. Daños agrícolas.<br><img src="https://upload.wikimedia.org/wikipedia/commons/8/8f/Hurricane_damage.jpg" class="popup-img">'},
+            {coords: [18.5500, -69.3000], popup: '<b>Santo Domingo:</b> Inundaciones urbanas. Pérdida económica: $50M.<br><img src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Flooding_in_city.jpg" class="popup-img">'},
+            {coords: [19.7500, -71.5000], popup: '<b>Puerto Plata:</b> Erosión costera. Playas reducidas 20%.<br><img src="https://upload.wikimedia.org/wikipedia/commons/7/7d/Coastal_erosion.jpg" class="popup-img">'},
+            {coords: [18.3000, -72.4000], popup: '<b>Sur de Haití:</b> Huracanes categoría 4-5.<br><img src="https://upload.wikimedia.org/wikipedia/commons/9/9f/Hurricane_damage_coast.jpg" class="popup-img">'},
+            {coords: [19.4500, -70.7000], popup: '<b>La Vega:</b> Sequía prolongada. Agricultura en riesgo.<br><img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Drought_field.jpg" class="popup-img">'},
+            {coords: [18.8000, -71.0000], popup: '<b>Barahona:</b> Alta vulnerabilidad climática.<br><img src="https://upload.wikimedia.org/wikipedia/commons/4/4f/Deforestation_Haiti.jpg" class="popup-img">'},
+            {coords: [19.1000, -69.9000], popup: '<b>El Seibo:</b> Riesgo de huracanes y pérdida de cultivos.<br><img src="https://upload.wikimedia.org/wikipedia/commons/8/8f/Hurricane_damage.jpg" class="popup-img">'},
+            {coords: [18.6000, -72.0000], popup: '<b>Jacmel:</b> Inundaciones y deslizamientos.<br><img src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Flooding_in_city.jpg" class="popup-img">'}
+        ];
+
+        locations.forEach(function(loc) {
+            L.marker(loc.coords).addTo(map)
+                .bindPopup(loc.popup);
+        });
+
+        var baseMaps = {
+            "Mapa Callejero": osm,
+            "Imágenes Satelitales": satellite
+        };
+
+        L.control.layers(baseMaps, thematicLayers).addTo(map);
+
+        // Botón de geolocalización
+        function locateUser() {
+            map.locate({setView: true, maxZoom: 12});
+        }
+
+        map.on('locationfound', function(e) {
+            L.marker(e.latlng).addTo(map)
+                .bindPopup('📍 Estás aquí').openPopup();
+        });
+
+        map.on('locationerror', function() {
+            alert('No se pudo obtener tu ubicación. Verifica permisos de GPS.');
+        });
+    </script>
+</body>
+</html>
